@@ -758,12 +758,25 @@
                         <h3 class="product-name">${product.name}</h3>
                         <div class="product-price">$${product.price}</div>
                         <div class="product-actions">
-                            <button class="btn-secondary" onclick="addToCart(${product.id})">Add to Cart</button>
-                            <button class="btn-icon" onclick="addToWishlist(${product.id})" title="Add to Wishlist">♡</button>
+                            <button class="btn-secondary" data-action="add-to-cart" data-product-id="${product.id}">Add to Cart</button>
+                            <button class="btn-icon" data-action="add-to-wishlist" data-product-id="${product.id}" title="Add to Wishlist">♡</button>
                         </div>
                     </div>
                 </div>
             `).join('');
+            
+            // Add event listeners using event delegation
+            grid.querySelectorAll('[data-action="add-to-cart"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    addToCart(parseInt(this.dataset.productId));
+                });
+            });
+            
+            grid.querySelectorAll('[data-action="add-to-wishlist"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    addToWishlist(parseInt(this.dataset.productId));
+                });
+            });
         }
 
         // Add to cart
