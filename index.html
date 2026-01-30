@@ -764,41 +764,63 @@
         // State management
         let cart = [];
         let wishlist = [];
+        let useLocalStorage = true;
+
+        // Check if localStorage is available
+        function checkLocalStorage() {
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                return true;
+            } catch (e) {
+                console.warn('localStorage not available, using memory only');
+                return false;
+            }
+        }
 
         // Load from localStorage
         function loadData() {
-            const savedCart = localStorage.getItem('luxe-cart');
-            const savedWishlist = localStorage.getItem('luxe-wishlist');
+            if (!useLocalStorage) return;
             
-            if (savedCart) {
-                try {
+            try {
+                const savedCart = localStorage.getItem('luxe-cart');
+                const savedWishlist = localStorage.getItem('luxe-wishlist');
+                
+                if (savedCart) {
                     cart = JSON.parse(savedCart);
-                } catch (e) {
-                    cart = [];
                 }
-            }
-            
-            if (savedWishlist) {
-                try {
+                
+                if (savedWishlist) {
                     wishlist = JSON.parse(savedWishlist);
-                } catch (e) {
-                    wishlist = [];
                 }
+            } catch (e) {
+                console.error('Error loading data:', e);
+                cart = [];
+                wishlist = [];
             }
         }
 
         // Save to localStorage
         function saveData() {
-            localStorage.setItem('luxe-cart', JSON.stringify(cart));
-            localStorage.setItem('luxe-wishlist', JSON.stringify(wishlist));
+            if (!useLocalStorage) return;
+            
+            try {
+                localStorage.setItem('luxe-cart', JSON.stringify(cart));
+                localStorage.setItem('luxe-wishlist', JSON.stringify(wishlist));
+            } catch (e) {
+                console.error('Error saving data:', e);
+            }
         }
 
         // Initialize
         function init() {
+            console.log('Initializing LUXE store...');
+            useLocalStorage = checkLocalStorage();
             loadData();
             renderProducts();
             updateCounts();
             setupEventListeners();
+            console.log('Initialization complete!');
         }
 
         // Setup all event listeners
@@ -821,7 +843,13 @@
 
         // Render products
         function renderProducts() {
+            console.log('Rendering products...');
             const grid = document.getElementById('products-grid');
+            if (!grid) {
+                console.error('Products grid not found!');
+                return;
+            }
+            
             grid.innerHTML = '';
             
             products.forEach(product => {
@@ -844,32 +872,48 @@
                 const cartBtn = card.querySelector('.add-to-cart-btn');
                 const wishlistBtn = card.querySelector('.add-to-wishlist-btn');
                 
-                cartBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    addToCart(product.id);
-                });
+                if (cartBtn) {
+                    cartBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Cart button clicked!');
+                        addToCart(product.id);
+                    });
+                }
                 
-                wishlistBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    addToWishlist(product.id);
-                });
+                if (wishlistBtn) {
+                    wishlistBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Wishlist button clicked!');
+                        addToWishlist(product.id);
+                    });
+                }
                 
                 grid.appendChild(card);
             });
+            
+            console.log('Products rendered:', products.length);
         }
 
         // Add to cart
         function addToCart(productId) {
+            console.log('Adding to cart, product ID:', productId);
             const product = products.find(p => p.id === productId);
-            if (!product) return;
+            if (!product) {
+                console.error('Product not found:', productId);
+                return;
+            }
             
             const exists = cart.find(item => item.id === productId);
             if (!exists) {
                 cart.push(product);
+                console.log('Product added to cart:', product);
                 saveData();
                 updateCounts();
                 showNotification('Added to cart!');
             } else {
+                console.log('Product already in cart');
                 showNotification('Already in cart!');
             }
         }
@@ -1052,10 +1096,16 @@
         }
 
         // Initialize app when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
+        window.addEventListener('load', function() {
+            console.log('Page loaded, initializing...');
             init();
+        });
+        
+        // Backup initialization
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(init, 100);
+        } else {
+            document.addEventListener('DOMContentLoaded', init);
         }
     </script>
 </body>
